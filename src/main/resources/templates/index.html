@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+
+<link rel="stylesheet"
+	href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+	crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+	integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+	crossorigin=""></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+	integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+	crossorigin="anonymous"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+	integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu"
+	crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css"
+	integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ"
+	crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script
+	src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
+	integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
+	crossorigin="anonymous"></script>
+	
+<!-- then load CanvasFlowMapLayer -->
+<script src="/js/CanvasFlowmapLayer.js"></script>
+
+<style>
+html, body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+
+#map {
+	float: left;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.leaflet-div-icon {
+	padding:4px;
+	font-size: 16px;
+	border-radius: 5px;
+	min-width: 300px;
+	box-shadow: 3px 3px #AAAAAA;
+	font-family: Calibri;
+	z-index: 0;
+	font-weight:bold;
+}
+
+.leaflet-right {
+	margin-right: 40%;
+}
+
+.slidecontainer {
+	width: 500px;
+	font-size: 17px;
+	font-family: Calibri;
+}
+
+.tooltip-inner {
+	padding: 10px;
+	border: 0px solid #000;
+	color: #000;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+	color: white;
+	font-size: 20px;
+	min-width: 300px;
+	white-space: normal;
+	font-family: Calibri;
+	text-align: left;
+}
+</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script th:inline="javascript">
+		$(function() {
+			L.Marker.prototype.__setPos = L.Marker.prototype._setPos;
+			L.Marker.prototype._setPos = function() {
+				L.Marker.prototype.__setPos.apply(this, arguments);
+				this._zIndex = this.options.zIndexOffset;
+				this._resetZIndex();
+			};
+			
+			var d = new Date();
+			var flowMapLayer = null;
+			
+			var Esri_WorldTopoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+				opacity : 0.6,
+				maxNativeZoom : 18,
+				maxZoom : 20,
+				attribution : 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+			});
+			map = L.map('map').setView([ 49.1529, 41.1328 ], 3).addLayer(Esri_WorldTopoMap);
+
+			map.on('click', function(e) {
+				console.log("Lat, Lon : " + e.latlng.lat + ", " + e.latlng.lng)
+			});
+
+			var markersLayer = new L.LayerGroup();
+
+			markersLayer.addTo(map);
+
+			var timeSliderControl = L.Control.extend({
+
+				options : {
+					position : 'topright'
+				},
+
+				onAdd : function(map) {
+					var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+					container.id = 'timeSlider';
+					container.innerHTML = '<div class="slidecontainer"><span id="timeslideroutput"></span><input type="range" min="0" max="72" value="72" class="slider" id="timeSliderControl"></div>';
+					container.style = 'background-color:white;padding:3px;font-size:8px;color:#666666';
+
+					return container;
+				}
+			});
+
+			map.addControl(new timeSliderControl());
+
+			$('#timeSliderControl').mousedown(function() {
+				map.dragging.disable();
+			})
+
+			$('#timeSliderControl').mouseup(function() {
+				map.dragging.enable();
+			})
+
+			$('#timeSliderControl').change(function() {
+				var hours = 72 - $('#timeSliderControl').val();
+				d = new Date();
+				d.setHours(d.getHours() - hours);
+				$('#timeslideroutput').text('before ' + formatDate(d));
+				getNews(hours);
+			})
+
+			d.setHours(d.getHours());
+			$('#timeslideroutput').text('before ' + formatDate(d));
+			getNews(0);
+
+			function getNews(hours) {
+				$.ajax({
+					type : "GET",
+					url : '/news/' + hours + '/',
+					data : {},
+
+					success : function(data) {
+						console.log(data.body)
+
+						markersLayer.clearLayers();
+						
+						buildFeatures(data.body, markersLayer);
+						
+						// build marker
+						buildMarker(data.body, markersLayer);
+					}
+				});
+			}
+			
+			function buildFeatures(model, markersLayer){
+
+				//build feature
+				var features = [];
+				var uniqueValueInfos = [];
+				
+				for (var key in model) {
+
+					var row = model[key];
+					var latlngs = key.split(":");
+					var lat = parseFloat(latlngs[0]);
+					var lng = parseFloat(latlngs[1]);
+					
+					for(var i in row.toList){
+						var to = row.toList[i];
+					
+						var feature = {};
+						
+						feature.type = "Feature";
+						feature.geometry = {
+							type : "Point",
+							coordinates : [ lat, lng ]
+						}
+						
+						feature.properties = {
+							origin_id : row.center.id,
+							origin_city : row.center.city,
+							origin_country : row.center.country,
+							origin_lat : lat,
+							origin_lon : lng,
+							
+							destination_id : to.id,
+							destination_city : to.city,
+							destination_country : to.country,
+							destination_lat : to.lat,
+							destination_lon : to.lng,
+
+							"key" : to.id
+						}
+						
+						features.push(feature);
+						
+						uniqueValueInfos.push({
+			            	value : to.id,
+			            	symbol: {
+				                strokeStyle: '#' + to.color,
+				                lineWidth: 5,
+				                lineCap : 'round'
+				            }
+			            })
+					}
+				}
+				
+				collection = {
+					"features" : features
+				}
+				
+				flowMapLayer = L.canvasFlowmapLayer(collection, 
+				{
+					pathDisplayMode : 'select',
+					animationStarted : true,
+					animationEasingFamily : 'Cubic',
+					animationEasingType : 'In',
+					animationDuration : 2000,
+					canvasBezierStyle: {
+			            type: 'uniqueValue',
+			            field: 'key',
+			            "uniqueValueInfos" : uniqueValueInfos,
+					}
+				}).addTo(markersLayer);
+				
+			}
+			
+			function buildMarker(model, markersLayer){
+				console.log("model , ", model);
+				
+				for(var key in model){
+					c = model[key];
+					
+					var lineCount = 0;
+					var html = '<div class="divLabel">';
+					for(var i in c.newsList){
+						var row = c.newsList[i];
+
+						var rowDate = new Date(row.date);
+						var hoursDiff = (d - rowDate) / 1000 / 60 / 60.0;
+						
+						var color = "#" + row.color + "";
+						
+						var textCSS = "opacity:" + row.opacity + ";font-size : " + (10 * row.scale + 13)  + "px;";
+						if(hoursDiff > 2){
+							textCSS += "padding:5px";
+						}else if(hoursDiff > 1){
+							textCSS += "background-color:#FFF1D6;padding:5px;font-weight:bold;";
+						}else{
+							textCSS += "background-color:#FFEEBB;padding:5px;font-weight:bold;";
+						}
+						
+						var url = "";
+						if(row.source === 'reddit'){
+							url = 'https://www.reddit.com/r/worldnews/' + row.id +'';	
+						}else if(row.source === 'baidu'){
+							url = row.url;
+						}
+						
+						var label = "";
+						var labelCount = 0;
+						for(var h in row.hash){
+							hash = row.hash[h];
+							
+							if(hash.type === 'pobj' || hash.type === 'dobj'){
+								label += hash.name + " ";
+								if(labelCount++ > 2){
+									break;
+								}
+							}
+						}
+						
+						if(label === ""){
+							if(row.hash.length > 0){
+								label = row.hash[0].name;
+							}else{
+								label = row.title;
+							}
+						}
+										
+						html += '<div id="'+row.id+'" style="'+textCSS+'" data-id="'+ c.center.id +'" data-toggle="tooltip" data-placement="right" data-html="true" data-container="body" title="<span style=\'font-size:10px\'>' + formatDate(new Date(row.date)) + '</span><br/>' + row.title.replace(/\"/g,"'")+'"><a href="'+url+'" target="_blank" style="color:'+color+'">(' + (hoursDiff * -1).toFixed(1) + ' hr) ' + label.replace(/_/g, " ") + '</a></div>';
+						lineCount++;
+					}
+					html += "</div>";
+					
+					var textIcon = L.divIcon({
+						iconSize : null,
+						iconAnchor: [150, lineCount * 15],
+						"html" : html
+					});
+					
+					var marker = L.marker([ c.center.lat  , c.center.lng ],
+							{icon : textIcon})
+							.addTo(markersLayer);
+					
+					marker.setOpacity(0.95);
+					
+
+				}
+				
+
+				$('[data-toggle="tooltip"]').tooltip();
+				$('[data-toggle="tooltip"]').on('mouseover', function(e){
+					for(var i in flowMapLayer.getLayers()){
+						if(flowMapLayer.getLayers()[i].feature.properties.origin_id === $(this).data().id){
+							flowMapLayer.selectFeaturesForPathDisplayById('origin_id', $(this).data().id, true, 'SELECTION_NEW');
+							break;
+						}
+					}
+				})
+				
+			}
+
+
+			function formatDate(date) {
+				var hours = date.getHours();
+				var minutes = date.getMinutes();
+				minutes = minutes < 10 ? '0' + minutes : minutes;
+				var strTime = hours + ':' + minutes;
+				return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + "  " + strTime;
+			}
+			window.onerror = function myErrorHandler(errorMsg, url, lineNumber) {
+			    return false;
+			}
+		});
+	</script>
+</body>
+
+</html>
