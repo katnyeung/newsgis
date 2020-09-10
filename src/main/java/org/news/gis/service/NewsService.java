@@ -30,7 +30,7 @@ public class NewsService {
 
 	public Set<News> getNewsByHoursBefore(int hours) {
 		Integer to = hours * 60 * 60;
-		Integer from = to + (9 * 60 * 60);
+		Integer from = to + (6 * 60 * 60);
 
 		Set<News> newsList = newsDAO.getNewsBySecondsBefore(from, to);
 
