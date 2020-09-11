@@ -31,7 +31,7 @@
 	src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
 	integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
 	crossorigin="anonymous"></script>
-	
+
 <!-- then load CanvasFlowMapLayer -->
 <script src="/js/CanvasFlowmapLayer.js"></script>
 
@@ -50,14 +50,14 @@ html, body {
 }
 
 .leaflet-div-icon {
-	padding:4px;
+	padding: 4px;
 	font-size: 14px;
 	border-radius: 5px;
 	min-width: 300px;
 	box-shadow: 3px 3px #AAAAAA;
 	font-family: Calibri;
 	z-index: 0;
-	font-weight:bold;
+	font-weight: bold;
 }
 
 .leaflet-right {
@@ -129,7 +129,7 @@ html, body {
 				onAdd : function(map) {
 					var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
 					container.id = 'timeSlider';
-					container.innerHTML = '<div class="slidecontainer"><span id="timeslideroutput"></span><input type="range" min="0" max="72" value="72" class="slider" id="timeSliderControl"></div>';
+					container.innerHTML = '<div class="slidecontainer"><span id="timeslideroutput"></span><input type="range" min="0" max="72" value="72" step="3" class="slider" id="timeSliderControl"></div>';
 					container.style = 'background-color:white;padding:3px;font-size:8px;color:#666666';
 
 					return container;
@@ -304,8 +304,11 @@ html, body {
 								label = row.title;
 							}
 						}
-										
-						html += '<div id="'+row.id+'" style="'+textCSS+'" data-id="'+ c.center.id +'" data-toggle="tooltip" data-placement="right" data-html="true" data-container="body" title="<span style=\'font-size:10px\'>' + formatDate(new Date(row.date)) + '</span><br/>' + row.title.replace(/\"/g,"'")+'"><a href="'+url+'" target="_blank" style="color:'+color+'">(' + (hoursDiff * -1).toFixed(1) + ' hr) ' + label.replace(/_/g, " ") + '</a></div>';
+						numComments = row.numComments === null ? '' : ' (' + row.numComments + ')';
+						
+						html += '<div id="'+row.id+'" style="'+textCSS+'" data-id="'+ c.center.id +'" data-toggle="tooltip" data-placement="right" data-html="true" data-container="body" ';
+						html += 'title="<span style=\'font-size:10px\'>' + formatDate(new Date(row.date)) + '</span><br/>' + row.title.replace(/\"/g,"'") + '">';
+						html += '<a href="'+url+'" target="_blank" style="color:'+color+'">(' + (hoursDiff * -1).toFixed(1) + ' hr) ' + label.replace(/_/g, " ") + numComments + '</a></div>';
 						lineCount++;
 					}
 					html += "</div>";
