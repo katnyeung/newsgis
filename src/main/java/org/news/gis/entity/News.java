@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "news", indexes = { @Index(name = "news_range", columnList = "status,createdate") })
+@Table(name = "news", indexes = { @Index(name = "news_range", columnList = "status,newsDate") })
 public class News {
 
 	@Id
