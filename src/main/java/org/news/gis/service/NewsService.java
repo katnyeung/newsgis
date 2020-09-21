@@ -45,8 +45,22 @@ public class NewsService {
 			String rndColor = getRandomColor(news.getUniqueId());
 			
 			GeoLocation center = getCenterLocation(news);
-			String key = String.format("%.4f", center.getLat()) + ":" + String.format("%.4f", center.getLng());
-
+			String key = "";
+			
+			if(center == null) {
+				//default location in center
+				key = "12.7260:214.9804";
+				
+				center = new GeoLocation();
+				center.setLat(12.7260);
+				center.setLng(214.9804);
+				center.setSeq(0);
+				center.setCity("Unknown");
+				
+			}else {
+				key = String.format("%.4f", center.getLat()) + ":" + String.format("%.4f", center.getLng());
+			}
+			
 			NewsResponse newsResponse = nrMap.get(key);
 
 			if (newsResponse == null) {

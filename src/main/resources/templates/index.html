@@ -330,7 +330,7 @@ html, body {
 				
 
 				$('[data-toggle="tooltip"]').tooltip();
-				$('[data-toggle="tooltip"]').on('mouseover', function(e){
+				$('[data-toggle="tooltip"]').on('mouseover touchenter', function(e){
 					for(var i in flowMapLayer.getLayers()){
 						if(flowMapLayer.getLayers()[i].feature.properties.origin_id === $(this).data().id){
 							flowMapLayer.selectFeaturesForPathDisplayById('origin_id', $(this).data().id, true, 'SELECTION_NEW');
