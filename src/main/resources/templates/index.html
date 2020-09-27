@@ -277,7 +277,7 @@ html, body {
 						
 						var url = "";
 						if(row.source === 'reddit'){
-							url = 'https://www.reddit.com/r/worldnews/' + row.id +'';	
+							url = 'https://www.reddit.com/r/worldnews/comments/' + row.id +'';	
 						}else if(row.source === 'baidu'){
 							url = row.url;
 						}else if(row.source === 'huanqiu'){
@@ -288,12 +288,16 @@ html, body {
 						var labelCount = 0;
 						for(var h in row.hash){
 							hash = row.hash[h];
-							
-							if(hash.type === 'pobj' || hash.type === 'dobj'){
-								label += hash.name + " ";
-								if(labelCount++ > 2){
-									break;
+
+							if(row.source === 'reddit'){
+								if(hash.type === 'pobj' || hash.type === 'dobj'){
+									label += hash.name + " ";
+									if(labelCount++ > 2){
+										break;
+									}
 								}
+							}else{
+								label = row.title.substring(0,12);
 							}
 						}
 						
