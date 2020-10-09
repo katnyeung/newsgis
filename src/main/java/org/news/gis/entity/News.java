@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
@@ -34,10 +35,12 @@ public class News {
 
 	@JsonProperty("url")
 	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@Lob
 	String url;
 
 	@JsonProperty("title")
 	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@Lob
 	String title;
 
 	@JsonIgnore
